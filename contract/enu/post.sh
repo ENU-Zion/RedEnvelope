@@ -1,0 +1,1 @@
+enucli  -u https://enu.qsx.io --wallet-url=http://127.0.0.1:8901 transfer qsx.io red.v  "0.1 ENU" '1|1|10|happy|ENU7q4gy7XW72NkqwQc43BMjbs6zBsL8428T53tYZyKVWEGJcjJc9'
