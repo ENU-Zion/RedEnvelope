@@ -357,13 +357,16 @@ class RedEnvelope : public enumivo::contract
     void transfer(const account_name from, const account_name to, const asset quantity, const std::string memo);
 
     // @abi action
-    void jump(const uint64_t envelope_id, const account_name user, const signature &sig, const public_key &pk);
+    void hop(const uint64_t envelope_id, const account_name user, const signature &sig, const public_key &pk);
 
     // @abi action
     void reveal(const uint64_t envelope_id, const account_name user, const signature &sig, const public_key &pk);
 
     // @abi action
     void reset();
+
+    // @abi action
+    void release(const uint64_t envelope_id);
 
   private:
     struct this_public_key
@@ -415,6 +418,21 @@ class RedEnvelope : public enumivo::contract
             v.push_back(s.substr(pos1));
     }
 
+    string int2str(uint64_t x)
+    {
+        string tmp(""), ans("");
+        while (x > 0)
+        {
+            tmp += (x % 10) + 48;
+            x /= 10;
+        }
+        for (int i = tmp.size() - 1; i >= 0; i--)
+        {
+            ans += tmp[i];
+        }
+        return ans;
+    }
+
     uint64_t _next_id()
     {
         auto gl_itr = _global.begin();
@@ -448,15 +466,17 @@ class RedEnvelope : public enumivo::contract
     {
         uint64_t envelope_id;
         uint8_t type;
+        account_name creator;
         string words;
         string public_key;
-        asset total_amount;
-        asset rest_amount;
+        asset total_quantity;
+        asset rest_quantity;
         uint64_t total_number;
-        uint64_t rest_numer;
-        uint64_t time;
+        uint64_t rest_number;
+        uint64_t create_time;
+        uint64_t expire_time;
         uint64_t primary_key() const { return envelope_id; }
-        ENULIB_SERIALIZE(envelopes, (envelope_id)(type)(words)(public_key)(total_amount)(rest_amount)(total_number)(rest_numer)(time))
+        ENULIB_SERIALIZE(envelopes, (envelope_id)(type)(creator)(words)(public_key)(total_quantity)(rest_quantity)(total_number)(rest_number)(create_time)(expire_time))
     };
 
     typedef enumivo::multi_index<N(envelopes), envelopes> envelopes_index;
@@ -484,4 +504,4 @@ class RedEnvelope : public enumivo::contract
         }                                                                                                                  \
     }
 
-ENUMIVO_ABI_EX(RedEnvelope, (transfer)(get)(reveal)(jump)(reset))
+ENUMIVO_ABI_EX(RedEnvelope, (transfer)(get)(reveal)(hop)(reset)(release))

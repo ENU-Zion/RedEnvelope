@@ -1,1 +1,1 @@
-enucli  -u https://enu.qsx.io --wallet-url=http://127.0.0.1:8901 push action red.v get '[1,"enumivoqsxio","SIG_K1_KdLA5d8C9NQsiVdATQvvviB2PVhbKgk7gEDxUdZ32FEf2von2XozKx1jARNDhzy9V1Y6ymKgY8JWiac9Hx7pGowFsgKzjo"]' -p red.v@active
+enucli  -u https://enu.qsx.io --wallet-url=http://127.0.0.1:8901 push action red.v get '[1,"qsx.io","SIG_K1_K6D5TGd3qUQXaCbWv85KEk6jvDCXAhh2tfX6gJ2g4XWLiag7nHgP9o8KWtgcxXrDUZy6SfS5Judv3JrXkxddmNaDVNWwXy"]' -p red.v@active

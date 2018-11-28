@@ -1,0 +1,1 @@
+enucli -u https://api.qsx.io --wallet-url=http://127.0.0.1:8901 set account permission red.v active '{"threshold": 1,"keys": [{"key": "ENU7q4gy7XW72NkqwQc43BMjbs6zBsL8428T53tYZyKVWEGJcjJc9","weight": 1}],"accounts": [{"permission":{"actor":"red.v","permission":"enumivo.code"},"weight":1}]}' owner -p red.v
