@@ -374,6 +374,11 @@ class RedEnvelope : public enumivo::contract
         uint8_t type;
         array<unsigned char, 33> data;
     };
+    struct envelope_log
+    {
+        account_name user;
+        asset quantity;
+    };
     this_public_key getPublicKey(const string public_key_str)
     {
         enumivo_assert(public_key_str.length() == 53, "Length of publik key should be 53");
@@ -475,8 +480,9 @@ class RedEnvelope : public enumivo::contract
         uint64_t rest_number;
         uint64_t create_time;
         uint64_t expire_time;
+        vector<envelope_log> logs;
         uint64_t primary_key() const { return envelope_id; }
-        ENULIB_SERIALIZE(envelopes, (envelope_id)(type)(creator)(words)(public_key)(total_quantity)(rest_quantity)(total_number)(rest_number)(create_time)(expire_time))
+        ENULIB_SERIALIZE(envelopes, (envelope_id)(type)(creator)(words)(public_key)(total_quantity)(rest_quantity)(total_number)(rest_number)(create_time)(expire_time)(logs))
     };
 
     typedef enumivo::multi_index<N(envelopes), envelopes> envelopes_index;

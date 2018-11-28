@@ -5,6 +5,13 @@ void RedEnvelope::get(const uint64_t envelope_id, const account_name user, const
     auto itr = _envelopes.find(envelope_id);
     enumivo_assert(itr != _envelopes.end() && itr->envelope_id == envelope_id, "envelope not exsit!");
 
+    auto logs = itr->logs;
+
+    for (int i = 0; i < logs.size(); i++)
+    {
+        enumivo_assert(user != logs[i].user, "this user has already get this envelope!");
+    }
+
     auto pk = getPublicKey(itr->public_key);
 
     enumivo::transaction txn{};
@@ -130,6 +137,7 @@ void RedEnvelope::reveal(const uint64_t envelope_id, const account_name user, co
     auto rest_number = itr->rest_number;
     string creator = (name{itr->creator}).to_string();
     string words = itr->words;
+    auto logs = itr->logs;
     uint64_t this_amount;
 
     enumivo_assert(rest_amount > 0 && rest_number > 0, "this envelope is empty!");
@@ -139,7 +147,7 @@ void RedEnvelope::reveal(const uint64_t envelope_id, const account_name user, co
         //normal
     case 1:
         this_amount = total_amount / total_number;
-        rest_amount = total_amount - this_amount;
+        rest_amount = rest_amount - this_amount;
         rest_number -= 1;
         break;
 
@@ -149,9 +157,17 @@ void RedEnvelope::reveal(const uint64_t envelope_id, const account_name user, co
 
     string memo = "get red envelope from " + creator + "," + words;
 
+    envelope_log log = {
+        .user = user,
+        .quantity = asset(this_amount, ENU_SYMBOL),
+    };
+
+    logs.push_back(log);
+
     _envelopes.modify(itr, 0, [&](auto &e) {
         e.rest_quantity = asset(rest_amount, ENU_SYMBOL);
         e.rest_number = rest_number;
+        e.logs = logs;
     });
 
     //send
