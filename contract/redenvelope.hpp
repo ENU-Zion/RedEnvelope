@@ -438,6 +438,24 @@ class RedEnvelope : public enumivo::contract
         return ans;
     }
 
+    // 随机数生成
+    uint64_t _random(account_name user, uint64_t seed, uint64_t range)
+    {
+
+        auto mixd = tapos_block_prefix() * tapos_block_num() * seed + user - current_time();
+
+        const char *mixedChar = reinterpret_cast<const char *>(&mixd);
+
+        checksum256 result;
+        sha256((char *)mixedChar, sizeof(mixedChar), &result);
+
+        uint64_t num1 = *(uint64_t *)(&result.hash[0]) + *(uint64_t *)(&result.hash[8]) * 10 + *(uint64_t *)(&result.hash[16]) * 100 + *(uint64_t *)(&result.hash[24]) * 1000;
+
+        uint64_t random_num = (num1 % range + 1);
+
+        return random_num;
+    }
+
     uint64_t _next_id()
     {
         auto gl_itr = _global.begin();
@@ -480,9 +498,10 @@ class RedEnvelope : public enumivo::contract
         uint64_t rest_number;
         uint64_t create_time;
         uint64_t expire_time;
+        //vector<asset> quantities;
         vector<envelope_log> logs;
         uint64_t primary_key() const { return envelope_id; }
-        ENULIB_SERIALIZE(envelopes, (envelope_id)(type)(creator)(words)(public_key)(total_quantity)(rest_quantity)(total_number)(rest_number)(create_time)(expire_time)(logs))
+        ENULIB_SERIALIZE(envelopes, (envelope_id)(type)(creator)(words)(public_key)(total_quantity)(rest_quantity)(total_number)(rest_number)(create_time)(expire_time) /* (quantities) */ (logs))
     };
 
     typedef enumivo::multi_index<N(envelopes), envelopes> envelopes_index;

@@ -7,10 +7,10 @@ void RedEnvelope::get(const uint64_t envelope_id, const account_name user, const
 
     auto logs = itr->logs;
 
-    for (int i = 0; i < logs.size(); i++)
+    /* for (int i = 0; i < logs.size(); i++)
     {
         enumivo_assert(user != logs[i].user, "this user has already get this envelope!");
-    }
+    } */
 
     auto pk = getPublicKey(itr->public_key);
 
@@ -57,13 +57,40 @@ void RedEnvelope::transfer(const account_name from, const account_name to, const
     enumivo_assert(quantity.symbol == ENU_SYMBOL, "accept ENU only");
     enumivo_assert(quantity.is_valid(), "transfer invalid quantity");
 
-    //enumivo_assert(quantity.amount >= 1000, "amount must > 0.1 ENU");
-    //enumivo_assert(quantity.amount <= MAX, "amount must <= 2000 ENU");
+    enumivo_assert(quantity.amount >= 10000, "amount must >= 1 ENU");
+    enumivo_assert(num <= 100, "envolopes number must <= 100");
     enumivo_assert(num >= 1, "red envelope numbers must >= 1");
+
+    //enumivo_assert(quantity.amount <= MAX, "amount must <= 2000 ENU");
 
     //auto id = _next_id();
 
     enumivo_assert(_envelopes.find(envelope_id) == _envelopes.end(), "envelope already exsit!");
+
+    /* vector<asset> quantities;
+    if (type == 2)
+    {
+        int i = 0;
+        auto left_amount = quantity.amount - num;
+        enumivo_assert(left_amount > 0, "amount error!");
+        auto left_number = num;
+        while (i < num - 1)
+        {
+            auto random_number = _random(from, i, 300);
+            print("\nrandom:");
+            print(int2str(random_number).c_str());
+            uint64_t result = random_number / 100 * left_amount / left_number;
+            if (result > left_amount)
+            {
+                result = left_amount;
+            }
+            quantities.push_back(asset(result + 1, ENU_SYMBOL));
+            left_amount -= result;
+            left_number--;
+            i++;
+        }
+        quantities.push_back(asset(left_amount + 1, ENU_SYMBOL));
+    }; */
 
     _envelopes.emplace(_self, [&](auto &e) {
         e.envelope_id = envelope_id;
@@ -77,6 +104,7 @@ void RedEnvelope::transfer(const account_name from, const account_name to, const
         e.rest_number = num;
         e.create_time = now();
         e.expire_time = now() + 24 * 60 * 60; //1day
+        //e.quantities = quantities;
     });
 }
 
@@ -104,6 +132,7 @@ void RedEnvelope::reveal(const uint64_t envelope_id, const account_name user, co
 
     auto user_name = (name{user}).to_string();
     auto raw_data = user_name + int2str(envelope_id) + int2str(create_time);
+
     print("\nraw_data:");
     print(raw_data);
     const char *mixedChar = raw_data.c_str();
@@ -111,8 +140,9 @@ void RedEnvelope::reveal(const uint64_t envelope_id, const account_name user, co
     checksum256 digest;
     sha256((char *)mixedChar, raw_data.length(), &digest);
 
+    //print ----
     auto hex_public_key_str = to_hex(&pk, sizeof(pk));
-    print("input public key:");
+    print("\ninput public key:");
     print(hex_public_key_str.c_str());
     print("\n");
 
@@ -120,16 +150,12 @@ void RedEnvelope::reveal(const uint64_t envelope_id, const account_name user, co
     recover_key(&digest, (char *)&sig, sizeof(sig), (char *)&new_pk, sizeof(new_pk));
     auto new_hex_public_key_str = to_hex(&new_pk, sizeof(new_pk));
 
-    print("recover public key:");
+    print("\nrecover public key:");
     print(new_hex_public_key_str.c_str());
     print("\n");
+    //print ----
 
     assert_recover_key(&digest, (const char *)&sig, sizeof(sig), (const char *)&pk, sizeof(pk));
-
-    /* "total_amount" : "0.1000 ENU",
-                     "rest_amount" : "0.0000 ENU",
-                                     "total_number" : 10,
-                                     "rest_numer" : 10, */
 
     auto total_amount = itr->total_quantity.amount;
     auto rest_amount = itr->rest_quantity.amount;
@@ -150,6 +176,31 @@ void RedEnvelope::reveal(const uint64_t envelope_id, const account_name user, co
         rest_amount = rest_amount - this_amount;
         rest_number -= 1;
         break;
+
+        //random
+    case 2:
+    {
+        if (rest_number == 1)
+        {
+            this_amount = rest_number;
+        }
+        else
+        {
+            uint64_t min = 1;
+            uint64_t max = rest_amount / rest_number * 2;
+            auto r = _random(user, envelope_id, 100);
+            print("\nrandom:");
+            print(int2str(r).c_str());
+            this_amount = max * r / 100;
+            if (this_amount < min)
+            {
+                this_amount = min;
+            }
+        }
+        rest_amount = rest_amount - this_amount;
+        rest_number -= 1;
+    }
+    break;
 
     default:
         enumivo_assert(false, "type error!");
