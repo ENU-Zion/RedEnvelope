@@ -354,13 +354,16 @@ class RedEnvelope : public enumivo::contract
     // @abi action
     void get(const uint64_t envelope_id, const account_name user, const signature &sig);
 
-    void transfer(const account_name from, const account_name to, const asset quantity, const std::string memo);
+    void transfer(const account_name from, const account_name to, const asset quantity, const string memo);
 
     // @abi action
     void hop(const uint64_t envelope_id, const account_name user, const signature &sig, const public_key &pk);
 
     // @abi action
-    void reveal(const uint64_t envelope_id, const account_name user, const signature &sig, const public_key &pk);
+    void reveal(const uint64_t envelope_id, const account_name user, const signature &sig, const public_key &pk, const string create_account_str);
+
+    // @abi action
+    void newaccount(const uint64_t envelope_id, const account_name user, const signature &sig, const string public_key_str);
 
     // @abi action
     void reset();
@@ -532,4 +535,4 @@ class RedEnvelope : public enumivo::contract
         }                                                                                                                  \
     }
 
-ENUMIVO_ABI_EX(RedEnvelope, (transfer)(get)(reveal)(hop)(reset)(release)(withdraw))
+ENUMIVO_ABI_EX(RedEnvelope, (transfer)(get)(reveal)(hop)(reset)(release)(withdraw)(newaccount))

@@ -1,0 +1,1 @@
+enucli  -u https://api.qsx.io --wallet-url=http://127.0.0.1:8901 push action red.v newaccount '[1,"redenvelopee","SIG_K1_KBM3heaU3rzxmsKnEe3iZue9w1zmCdSKT13epbJfxCTjYu1r86JViESwqXh1FPpvDnNA7Smet4iFFXLBm8DF1GyzRQg4tU","ENU6MXaijfCd6Ro6pP7ACz2xy7hJQWuQE8kQCPxrEaiCFtKU7GMQn"]' -p red.v@active

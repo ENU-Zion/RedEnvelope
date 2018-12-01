@@ -17,12 +17,14 @@ void RedEnvelope::get(const uint64_t envelope_id, const account_name user, const
 
     auto pk = getPublicKey(itr->public_key);
 
+    string create_account_str = "";
+
     switch (itr->type)
     {
         //normal
     case 1:
         //inline action
-        action(permission_level{_self, N(active)}, _self, N(reveal), std::make_tuple(envelope_id, user, sig, pk))
+        action(permission_level{_self, N(active)}, _self, N(reveal), std::make_tuple(envelope_id, user, sig, pk, create_account_str))
             .send();
         break;
     case 2:
@@ -43,7 +45,7 @@ void RedEnvelope::get(const uint64_t envelope_id, const account_name user, const
     }
 }
 
-void RedEnvelope::transfer(const account_name from, const account_name to, const asset quantity, const std::string memo)
+void RedEnvelope::transfer(const account_name from, const account_name to, const asset quantity, const string memo)
 {
     if (from == _self || to != _self)
     {
@@ -131,11 +133,11 @@ void RedEnvelope::hop(const uint64_t envelope_id, const account_name user, const
         enumivo::permission_level(_self, N(active)),
         _self,
         N(reveal),
-        std::make_tuple(envelope_id, user, sig, pk));
+        std::make_tuple(envelope_id, user, sig, pk, string("")));
     txn.send(_next_id(), _self, false);
 }
 
-void RedEnvelope::reveal(const uint64_t envelope_id, const account_name user, const signature &sig, const public_key &pk)
+void RedEnvelope::reveal(const uint64_t envelope_id, const account_name user, const signature &sig, const public_key &pk, const string create_account_str)
 {
     require_auth(_self);
 
@@ -220,7 +222,7 @@ void RedEnvelope::reveal(const uint64_t envelope_id, const account_name user, co
         enumivo_assert(false, "type error!");
     }
 
-    string memo = "get red envelope from " + creator + "," + words;
+    //string memo = "get red envelope from " + creator + "," + words;
 
     envelope_log log = {
         .user = user,
@@ -235,8 +237,22 @@ void RedEnvelope::reveal(const uint64_t envelope_id, const account_name user, co
         e.logs = logs;
     });
 
+    account_name transfer_to;
+    string memo;
+    if (create_account_str == "")
+    {
+        memo = "get red envelope from " + creator + "," + words;
+        transfer_to = user;
+    }
+    else
+    {
+        memo = create_account_str;
+        enumivo_assert(this_amount >= 10000, "create account need at least 1 ENU!");
+        transfer_to = N(enu);
+    }
+
     //send
-    action(permission_level{_self, N(active)}, N(enu.token), N(transfer), std::make_tuple(_self, user, asset(this_amount, ENU_SYMBOL), memo))
+    action(permission_level{_self, N(active)}, N(enu.token), N(transfer), std::make_tuple(_self, transfer_to, asset(this_amount, ENU_SYMBOL), memo))
         .send();
 
     //release when empty
@@ -252,6 +268,24 @@ void RedEnvelope::reveal(const uint64_t envelope_id, const account_name user, co
         txn.delay_sec = 60 * 60;
         txn.send(_next_id(), _self, false);
     } */
+}
+
+void RedEnvelope::newaccount(const uint64_t envelope_id, const account_name user, const signature &sig, const string public_key_str)
+{
+    //check user name
+    enumivo_assert(!is_account(user), "account already exsit!");
+
+    auto itr = _envelopes.find(envelope_id);
+    enumivo_assert(itr != _envelopes.end() && itr->envelope_id == envelope_id, "envelope not exsit!");
+    enumivo_assert(itr->type == 1, "newaccount only support normal type!");
+
+    auto pk = getPublicKey(itr->public_key);
+
+    string create_account_str = name{user}.to_string() + ":" + public_key_str;
+    print("\ncreate account:");
+    print(create_account_str);
+    action(permission_level{_self, N(active)}, _self, N(reveal), std::make_tuple(envelope_id, user, sig, pk, create_account_str))
+        .send();
 }
 
 void RedEnvelope::reset()
