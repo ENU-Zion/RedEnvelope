@@ -368,6 +368,9 @@ class RedEnvelope : public enumivo::contract
     // @abi action
     void release(const uint64_t envelope_id);
 
+    // @abi action
+    void withdraw(const uint64_t envelope_id);
+
   private:
     struct this_public_key
     {
@@ -529,4 +532,4 @@ class RedEnvelope : public enumivo::contract
         }                                                                                                                  \
     }
 
-ENUMIVO_ABI_EX(RedEnvelope, (transfer)(get)(reveal)(hop)(reset)(release))
+ENUMIVO_ABI_EX(RedEnvelope, (transfer)(get)(reveal)(hop)(reset)(release)(withdraw))

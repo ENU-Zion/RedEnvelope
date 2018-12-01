@@ -2,6 +2,9 @@
 
 void RedEnvelope::get(const uint64_t envelope_id, const account_name user, const signature &sig)
 {
+    //check user name
+    enumivo_assert(is_account(user), "user should be valid account.");
+
     auto itr = _envelopes.find(envelope_id);
     enumivo_assert(itr != _envelopes.end() && itr->envelope_id == envelope_id, "envelope not exsit!");
 
@@ -14,8 +17,6 @@ void RedEnvelope::get(const uint64_t envelope_id, const account_name user, const
 
     auto pk = getPublicKey(itr->public_key);
 
-    enumivo::transaction txn{};
-
     switch (itr->type)
     {
         //normal
@@ -25,14 +26,17 @@ void RedEnvelope::get(const uint64_t envelope_id, const account_name user, const
             .send();
         break;
     case 2:
+    {
         //send defer action
+        enumivo::transaction txn{};
         txn.actions.emplace_back(
             enumivo::permission_level(_self, N(active)),
             _self,
             N(hop),
             std::make_tuple(envelope_id, user, sig, pk));
-        txn.send(0, _self, false);
-        break;
+        txn.send(_next_id(), _self, false);
+    }
+    break;
 
     default:
         enumivo_assert(false, "type error!");
@@ -106,6 +110,16 @@ void RedEnvelope::transfer(const account_name from, const account_name to, const
         e.expire_time = now() + 24 * 60 * 60; //1day
         //e.quantities = quantities;
     });
+
+    //send defer action, cancel after 24 hours
+    enumivo::transaction txn{};
+    txn.actions.emplace_back(
+        enumivo::permission_level(_self, N(active)),
+        _self,
+        N(release),
+        std::make_tuple(envelope_id));
+    txn.delay_sec = 60 * 60 * 24;
+    txn.send(_next_id(), _self, false);
 }
 
 void RedEnvelope::hop(const uint64_t envelope_id, const account_name user, const signature &sig, const public_key &pk)
@@ -118,7 +132,7 @@ void RedEnvelope::hop(const uint64_t envelope_id, const account_name user, const
         _self,
         N(reveal),
         std::make_tuple(envelope_id, user, sig, pk));
-    txn.send(0, _self, false);
+    txn.send(_next_id(), _self, false);
 }
 
 void RedEnvelope::reveal(const uint64_t envelope_id, const account_name user, const signature &sig, const public_key &pk)
@@ -182,7 +196,7 @@ void RedEnvelope::reveal(const uint64_t envelope_id, const account_name user, co
     {
         if (rest_number == 1)
         {
-            this_amount = rest_number;
+            this_amount = rest_amount;
         }
         else
         {
@@ -224,8 +238,6 @@ void RedEnvelope::reveal(const uint64_t envelope_id, const account_name user, co
     //send
     action(permission_level{_self, N(active)}, N(enu.token), N(transfer), std::make_tuple(_self, user, asset(this_amount, ENU_SYMBOL), memo))
         .send();
-
-    //_envelopes.erase(itr);
 }
 
 void RedEnvelope::reset()
@@ -243,7 +255,29 @@ void RedEnvelope::reset()
     print(i);
 }
 
+void RedEnvelope::withdraw(const uint64_t envelope_id)
+{
+    auto itr = _envelopes.find(envelope_id);
+    enumivo_assert(itr != _envelopes.end(), "can not find the envelope");
+    require_auth(itr->creator);
+    action(permission_level{_self, N(active)}, _self, N(release), std::make_tuple(envelope_id))
+        .send();
+}
+
 void RedEnvelope::release(const uint64_t envelope_id)
 {
     require_auth(_self);
+
+    auto itr = _envelopes.find(envelope_id);
+    enumivo_assert(itr != _envelopes.end(), "can not find the envelope");
+
+    print("\nrest_quantity");
+    print(itr->rest_quantity);
+    if (itr->rest_quantity.amount > 0)
+    {
+        action(permission_level{_self, N(active)}, N(enu.token), N(transfer), std::make_tuple(_self, itr->creator, itr->rest_quantity, string("return red envelope")))
+            .send();
+    }
+
+    _envelopes.erase(itr);
 }
