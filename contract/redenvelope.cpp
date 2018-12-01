@@ -238,6 +238,20 @@ void RedEnvelope::reveal(const uint64_t envelope_id, const account_name user, co
     //send
     action(permission_level{_self, N(active)}, N(enu.token), N(transfer), std::make_tuple(_self, user, asset(this_amount, ENU_SYMBOL), memo))
         .send();
+
+    //release when empty
+    /* if (rest_number == 0)
+    {
+        //send defer action, release after 1 hours
+        enumivo::transaction txn{};
+        txn.actions.emplace_back(
+            enumivo::permission_level(_self, N(active)),
+            _self,
+            N(release),
+            std::make_tuple(envelope_id));
+        txn.delay_sec = 60 * 60;
+        txn.send(_next_id(), _self, false);
+    } */
 }
 
 void RedEnvelope::reset()
