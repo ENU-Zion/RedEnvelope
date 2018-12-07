@@ -10,10 +10,10 @@ void RedEnvelope::get(const uint64_t envelope_id, const account_name user, const
 
     auto logs = itr->logs;
 
-    /* for (int i = 0; i < logs.size(); i++)
+    for (int i = 0; i < logs.size(); i++)
     {
         enumivo_assert(user != logs[i].user, "this user has already get this envelope!");
-    } */
+    }
 
     auto pk = getPublicKey(itr->public_key);
 
@@ -55,7 +55,14 @@ void RedEnvelope::transfer(const account_name from, const account_name to, const
     vector<string> splits;
     SplitString(memo, splits, "|");
     uint8_t type = atoi((splits[0]).c_str());
-    uint64_t envelope_id = atoi((splits[1]).c_str());
+    //print("\nid:");
+    //print(splits[1]);
+    /* uint64_t envelope_id;
+    std::istringstream iss(splits[1]);
+    iss >> envelope_id; */
+    uint64_t envelope_id = std::stoull((splits[1]).c_str());
+    //print("\nid:");
+    //print(envelope_id);
     uint8_t num = atoi((splits[2]).c_str());
     string words = splits[3];
     string public_key = splits[4];
@@ -149,15 +156,15 @@ void RedEnvelope::reveal(const uint64_t envelope_id, const account_name user, co
     auto user_name = (name{user}).to_string();
     auto raw_data = user_name + int2str(envelope_id) + int2str(create_time);
 
-    print("\nraw_data:");
-    print(raw_data);
+    //print("\nraw_data:");
+    //print(raw_data);
     const char *mixedChar = raw_data.c_str();
 
     checksum256 digest;
     sha256((char *)mixedChar, raw_data.length(), &digest);
 
     //print ----
-    auto hex_public_key_str = to_hex(&pk, sizeof(pk));
+    /* auto hex_public_key_str = to_hex(&pk, sizeof(pk));
     print("\ninput public key:");
     print(hex_public_key_str.c_str());
     print("\n");
@@ -168,7 +175,7 @@ void RedEnvelope::reveal(const uint64_t envelope_id, const account_name user, co
 
     print("\nrecover public key:");
     print(new_hex_public_key_str.c_str());
-    print("\n");
+    print("\n"); */
     //print ----
 
     assert_recover_key(&digest, (const char *)&sig, sizeof(sig), (const char *)&pk, sizeof(pk));
@@ -205,8 +212,8 @@ void RedEnvelope::reveal(const uint64_t envelope_id, const account_name user, co
             uint64_t min = 1;
             uint64_t max = rest_amount / rest_number * 2;
             auto r = _random(user, envelope_id, 100);
-            print("\nrandom:");
-            print(int2str(r).c_str());
+            //print("\nrandom:");
+            //print(int2str(r).c_str());
             this_amount = max * r / 100;
             if (this_amount < min)
             {
@@ -282,8 +289,8 @@ void RedEnvelope::newaccount(const uint64_t envelope_id, const account_name user
     auto pk = getPublicKey(itr->public_key);
 
     string create_account_str = name{user}.to_string() + ":" + public_key_str;
-    print("\ncreate account:");
-    print(create_account_str);
+    //print("\ncreate account:");
+    //print(create_account_str);
     action(permission_level{_self, N(active)}, _self, N(reveal), std::make_tuple(envelope_id, user, sig, pk, create_account_str))
         .send();
 }
@@ -299,8 +306,8 @@ void RedEnvelope::reset()
         _envelopes.erase(itr);
         itr = _envelopes.begin();
     }
-    print("\nenvelope number:");
-    print(i);
+    //print("\nenvelope number:");
+    //print(i);
 }
 
 void RedEnvelope::withdraw(const uint64_t envelope_id)
@@ -319,8 +326,8 @@ void RedEnvelope::release(const uint64_t envelope_id)
     auto itr = _envelopes.find(envelope_id);
     enumivo_assert(itr != _envelopes.end(), "can not find the envelope");
 
-    print("\nrest_quantity");
-    print(itr->rest_quantity);
+    //print("\nrest_quantity");
+    //print(itr->rest_quantity);
     if (itr->rest_quantity.amount > 0)
     {
         action(permission_level{_self, N(active)}, N(enu.token), N(transfer), std::make_tuple(_self, itr->creator, itr->rest_quantity, string("return red envelope")))
