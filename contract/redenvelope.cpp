@@ -7,6 +7,7 @@ void RedEnvelope::get(const uint64_t envelope_id, const account_name user, const
 
     auto itr = _envelopes.find(envelope_id);
     enumivo_assert(itr != _envelopes.end() && itr->envelope_id == envelope_id, "envelope not exsit!");
+    enumivo_assert(itr->rest_number > 0, "this envelope is empty!");
 
     auto logs = itr->logs;
 
@@ -284,7 +285,7 @@ void RedEnvelope::newaccount(const uint64_t envelope_id, const account_name user
 
     auto itr = _envelopes.find(envelope_id);
     enumivo_assert(itr != _envelopes.end() && itr->envelope_id == envelope_id, "envelope not exsit!");
-    enumivo_assert(itr->type == 1, "newaccount only support normal type!");
+    //enumivo_assert(itr->type == 1, "newaccount only support normal type!");
 
     auto pk = getPublicKey(itr->public_key);
 
